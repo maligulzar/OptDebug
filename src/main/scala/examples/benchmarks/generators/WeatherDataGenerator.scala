@@ -14,7 +14,7 @@ import scala.util.Random
 object WeatherDataGenerator {
   var logFile = ""
   var partitions = 10
-  var dataper  = 100
+  var dataper  = 10
   var fault_rate = 0.000001
   val random = new Random(42)
   def main(args:Array[String]) =

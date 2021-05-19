@@ -32,5 +32,4 @@ abstract class SymBase(private var prov: Provenance) extends Serializable{
     val result = otherProv.foldLeft(prov.cloneProvenance())({case (prov, other) => prov.merge(other)})
     result
   }
-  
 }

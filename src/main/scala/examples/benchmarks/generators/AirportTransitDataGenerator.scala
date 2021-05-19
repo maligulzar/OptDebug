@@ -36,9 +36,9 @@ object AirportTransitDataGenerator {
     var logFile = ""
 
 
-    var partitions = 40
-    var dataper  = 900000
-    var fault_rate = 0.000001
+    var partitions = 10
+    var dataper  = 9000
+    var fault_rate = 0.0001
     def faultInjector()  = if(Random.nextInt(dataper*partitions) < dataper*partitions* fault_rate) true else false
 
 

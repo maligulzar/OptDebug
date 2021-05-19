@@ -1,13 +1,25 @@
 package symbolicprimitives
 
 import provenance.data.Provenance
-import symbolicprimitives.SymImplicits.SymLong
 
 abstract class SymAny[T <: Any](val value: T, p: Provenance) extends SymBase(p) {
   def toSymString: SymString = {
     SymString(value.toString, getProvenance())
   }
-  
+
+  def getCallSite() : Provenance = {
+    val loc = Thread.currentThread.getStackTrace()
+      .dropWhile{s =>
+       (s.getClassName.startsWith("symbolicprimitives") ||
+        s.getClassName.startsWith("provenance") ||
+        s.getClassName.startsWith("java.lang"))
+      }(0)
+      .getLineNumber
+    val provCreatorFn = Provenance.createFn()
+    val prov = provCreatorFn(Seq(loc))
+    newProvenance(prov)
+  }
+
   override def hashCode(): Int = value.hashCode()
   
   override def equals(obj: scala.Any): Boolean =

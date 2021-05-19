@@ -20,9 +20,9 @@ object CommuteTypeDataGenerator {
     val sparkConf = new SparkConf()
     val random = new Random(42) // fixed seed for reproducability
     var logFile = ""
-    var partitions = 100
-    var dataper  = 500000
-    val faultRate = 1.0 / 100000
+    var partitions = 5
+    var dataper  = 5000
+    val faultRate = 1.0 / 10000
     def shouldInjectFault(dis: Int, time: Int): Boolean = {
       (dis / time > 40) && random.nextDouble() <= faultRate
     }
@@ -51,11 +51,11 @@ object CommuteTypeDataGenerator {
         val dis = Math.abs(z1.toInt - z2.toInt)*100 +  Random.nextInt(10)
         val time = Math.max(dis/(Random.nextInt(50)+10), 1) // time should be at least 1 to avoid
         // divide-by-zero error
-        val adjustedDis = if(shouldInjectFault(dis, time)) {
-          dis + (600 * time) // an extra 500 mph or so
-        } else {
+        val adjustedDis = //if(shouldInjectFault(dis, time)) {
+         // dis + (600 * time) // an extra 500 mph or so
+        //} else {
           dis
-        }
+        //}
         s"""sr,${z1},${z2},$adjustedDis,$time"""
         }.toIterator}.saveAsTextFile(trips)
     sc.textFile(trips).flatMap(s => Array(s.split(",")(1) , s.split(",")(2))).distinct().map(s =>s"""$s,${(s.toInt%100).toString}""" )

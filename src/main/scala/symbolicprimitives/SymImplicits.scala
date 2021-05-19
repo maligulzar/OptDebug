@@ -6,9 +6,10 @@ object SymImplicits {
 
   //TODO: Using zero as default provenance here. We need to chain this disconnect through dependency analysis
 
-  implicit def int2SymInt(s: Int): SymInt = SymInt(s, Provenance.create())
+  implicit def int2SymInt(s: Int): SymInt = SymInt(s)
   implicit def float2SymFloat(s: Float): SymFloat = SymFloat(s, Provenance.create())
   implicit def double2SymDouble(s: Double): SymDouble = SymDouble(s, Provenance.create())
+  //implicit def string2SymString(s: String): SymString = SymString(s)
 
   implicit def symVal2String(s: SymAny[_]): String = s.value.toString
 //  implicit def symInt2String(s: SymInt): String = s.value.toString

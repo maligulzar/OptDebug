@@ -8,11 +8,15 @@ scalaVersion := "2.11.8"
 libraryDependencies += "org.scalameta" %% "scalameta" % "4.2.3"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-core
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.2.0"
+//libraryDependencies += "org.apache.spark" %% "spark-core" % "2.2.0"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.2.3"
+//libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.2.3"
 
 libraryDependencies += "org.roaringbitmap" % "RoaringBitmap" % "0.8.11"
+
+libraryDependencies ++= Seq(
+  "com.chuusai" %% "shapeless" % "2.3.3"
+)
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-compiler" % "2.11.8",

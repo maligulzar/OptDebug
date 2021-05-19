@@ -9,6 +9,7 @@ import symbolicprimitives.{SymBase, Utils}
 import java.nio.ByteBuffer
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 class PairProvenanceDefaultRDD[K, V](override val rdd: RDD[(K, ProvenanceRow[V])])(
@@ -304,6 +305,8 @@ class PairProvenanceDefaultRDD[K, V](override val rdd: RDD[(K, ProvenanceRow[V])
       
     }
   }
+
+
   
   override def aggregateByKey[U: ClassTag](zeroValue: U, partitioner: Partitioner)
                                              (seqOp: (U, V) => U,
@@ -425,28 +428,30 @@ class PairProvenanceDefaultRDD[K, V](override val rdd: RDD[(K, ProvenanceRow[V])
 //    groupByKey(defaultPartitioner)
 //  }
 
-//  def groupByKeyNaive(partitioner: Partitioner): PairProvenanceDefaultRDD[K, Iterable[V]] =  {
-//
-//    // groupByKey shouldn't use map side combine because map side combine does not
-//    // reduce the amount of data shuffled and requires all map side data be inserted
-//    // into a hash table, leading to more objects in the old gen.
-//    val createCombiner = (v: V) => CompactBuffer(v)
-//    val mergeValue = (buf: CompactBuffer[V], v: V) => buf += v
-//    val mergeCombiners = (c1: CompactBuffer[V], c2: CompactBuffer[V]) => c1 ++= c2
-//    val bufs: PairProvenanceDefaultRDD[K, CompactBuffer[V]] = combineByKeyWithClassTag[CompactBuffer[V]](
-//      createCombiner, mergeValue, mergeCombiners, partitioner, mapSideCombine = false)
-//
-//    // Final cast of CompactBuffer -> Iterable for API matching
-//    bufs.asInstanceOf[PairProvenanceDefaultRDD[K, Iterable[V]]]
-//  }
-//
-//  def groupByKeyNaive(numPartitions: Int): PairProvenanceDefaultRDD[K, Iterable[V]] = {
-//    groupByKeyNaive(new HashPartitioner(numPartitions))
-//  }
-//
-//  def groupByKeyNaive(): PairProvenanceDefaultRDD[K, Iterable[V]] = {
-//    groupByKeyNaive(defaultPartitioner)
-//  }
+  import org.apache.spark.util.collection.CompactBuffer
+
+  override def groupByKey(partitioner: Partitioner): PairProvenanceRDD[K, Iterable[V]] =  {
+
+    // groupByKey shouldn't use map side combine because map side combine does not
+    // reduce the amount of data shuffled and requires all map side data be inserted
+    // into a hash table, leading to more objects in the old gen.
+    val createCombiner = (v: V) => ArrayBuffer(v)
+    val mergeValue = (buf: ArrayBuffer[V], v: V) => buf += v
+    val mergeCombiners = (c1: ArrayBuffer[V], c2: ArrayBuffer[V]) => c1 ++= c2
+    val bufs: PairProvenanceDefaultRDD[K, ArrayBuffer[V]] = combineByKeyWithClassTag[ArrayBuffer[V]](
+      createCombiner, mergeValue, mergeCombiners, partitioner, mapSideCombine = false)
+
+    // Final cast of CompactBuffer -> Iterable for API matching
+    bufs.asInstanceOf[PairProvenanceDefaultRDD[K, Iterable[V]]]
+  }
+
+ override  def groupByKey(numPartitions: Int): PairProvenanceRDD[K, Iterable[V]] = {
+    groupByKey(new HashPartitioner(numPartitions))
+  }
+
+  override def groupByKey(): PairProvenanceRDD[K, Iterable[V]] = {
+    groupByKey(defaultPartitioner)
+  }
 
   /** Join two RDDs while maintaining the key-key lineage. This operation is currently only
     * supported for RDDs that possess the same base input RDD.

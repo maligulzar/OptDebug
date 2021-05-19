@@ -8,8 +8,9 @@ import provenance.data.{DummyProvenance, Provenance}
 
 
 
-case class SymInt(override val value: Int, p : Provenance) extends SymAny(value, p) {
+case class SymInt(override val value: Int, p : Provenance = DummyProvenance.create()) extends SymAny(value, p) {
 
+  setProvenance(getCallSite())
   def this(value: Int) = {
     this(value, DummyProvenance.create())
   }
@@ -18,59 +19,71 @@ case class SymInt(override val value: Int, p : Provenance) extends SymAny(value,
     * Overloading operators from here onwards
     */
   def +(x: Int): SymInt = {
+    val mprov = getCallSite()
     val d = value + x
-    SymInt(d, getProvenance())
+    SymInt(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def -(x: Int): SymInt = {
+    val mprov = getCallSite()
     val d = value - x
-    SymInt(d, getProvenance())
+    SymInt(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def *(x: Int): SymInt = {
+    val mprov = getCallSite()
     val d = value * x
-    SymInt(d, getProvenance())
+    SymInt(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def *(x: Float): SymFloat = {
+    val mprov = getCallSite()
     val d = value * x
-    SymFloat(d, getProvenance())
+    SymFloat(d, newProvenance(mprov.cloneProvenance()))
   }
 
 
   def /(x: Int): SymDouble= {
+    val mprov = getCallSite()
     val d = value / x
-    SymDouble(d, getProvenance() )
+    SymDouble(d, newProvenance(mprov.cloneProvenance()) )
   }
 
   def /(x: Long): SymDouble= {
+    val mprov = getCallSite()
     val d = value / x
-    SymDouble(d, getProvenance())
+    SymDouble(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def +(x: SymInt): SymInt = {
-    SymInt(value + x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymInt(value + x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def -(x: SymInt): SymInt = {
-    SymInt(value - x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymInt(value - x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def *(x: SymInt): SymInt = {
-    SymInt(value * x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymInt(value * x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def /(x: SymInt): SymInt = {
-    SymInt(value / x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymInt(value / x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def %(x: Int): SymInt = {
-    SymInt(value % x, p)
+    val mprov = getCallSite()
+    SymInt(value % x, newProvenance(mprov.cloneProvenance()))
   }
   
   // Implementing on a need-to-use basis
   def toInt: SymInt = this
-  def toDouble: SymDouble = SymDouble(value.toDouble, getProvenance())
+  def toDouble: SymDouble = { val mprov = getCallSite()
+    SymDouble(value.toDouble, newProvenance(mprov.cloneProvenance()))}
   
   /**
     * Operators not supported yet

@@ -2,6 +2,9 @@ package examples.benchmarks
 
 import provenance.rdd.{FloatStreamingOutlierInfluenceTracker, InfluenceTracker, IntStreamingOutlierInfluenceTracker, PairProvenanceRDD, ProvenanceRDD, StreamingOutlierInfluenceTracker, TopNInfluenceTracker}
 import ProvenanceRDD._
+import org.apache.spark.lineage.rdd.Lineage
+import org.apache.spark.lineage.LineageContext._
+import org.apache.spark.rdd.RDD
 import symbolicprimitives.SymImplicits._
 import symbolicprimitives._
 
@@ -68,6 +71,16 @@ object AggregationFunctions {
       {case ((sum1, count1), (sum2, count2)) => (sum1+sum2,count1+count2)}
                                                           ).mapValues({case (sum, count) => sum.toDouble/count})
   }
+
+
+  def averageByKey[K: ClassTag](input: RDD[(K, Float)])
+                               (implicit a: DummyImplicit,
+                                b: DummyImplicit): RDD[(K, Float)] = {
+    input.aggregateByKey[(SymFloat, SymFloat)]((0f, 0f))(
+      {case ((sum, count), next) => (sum + next, count+1)},
+      {case ((sum1, count1), (sum2, count2)) => (sum1+sum2,count1+count2)}
+    ).mapValues({case (sum, count) => sum.toFloat/count})
+  }
   
   def averageByKey[K: ClassTag](input: ProvenanceRDD[(K, SymDouble)])
                                (implicit a: DummyImplicit,
@@ -95,6 +108,8 @@ object AggregationFunctions {
                                                           ).mapValues({case (sum, count) => sum
       .toFloat/count})
   }
+
+
   
   /** Default IntStreamingOutlier function */
   def averageByKeyWithInfluence[K: ClassTag](input: ProvenanceRDD[(K, Int)],
@@ -125,6 +140,13 @@ object AggregationFunctions {
       { case ((curMin, curMax), next) => (Math.min(curMin, next), Math.max(curMax, next)) },
       { case ((minA, maxA), (minB, maxB)) => (Math.min(minA, minB), Math.max(maxA, maxB)) })
          .mapValues({ case (min, max) => max - min })
+  }
+
+  def minMaxDeltaByKey[K: ClassTag](input: Lineage[(K, Float)]): Lineage[(K, Float)] = {
+    input.aggregateByKey((Float.MaxValue, Float.MinValue))(
+      { case ((curMin, curMax), next) => (Math.min(curMin, next), Math.max(curMax, next)) },
+      { case ((minA, maxA), (minB, maxB)) => (Math.min(minA, minB), Math.max(maxA, maxB)) })
+      .mapValues({ case (min, max) => max - min })
   }
   
   def minMaxDeltaByKey[K: ClassTag](input: ProvenanceRDD[(K, SymFloat)])

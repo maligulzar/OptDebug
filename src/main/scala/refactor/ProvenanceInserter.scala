@@ -126,20 +126,33 @@ object Insert {
 
     val transformer = new ProvenanceInserter()
     val program =
-      """object Main extends App {
-        |      joined
-        |        .map( s =>
-        |          // Checking if speed is < 25mi/hr
-        |          if (s._2._1 > 40) {
-        |            ("car", 1)
-        |          } else if (s._2._1 > 15) {
-        |            ("public", 1)
-        |          } else {
-        |            ("onfoot", 1)
-        |          }
-        |        )
-        |        .reduceByKey(_ + _)
-        |}""".stripMargin
+      """object StudentGradesOptDebug {
+        |
+        |  def fun1(input: Lineage[String]): RDD[(String, Float)] = {
+        |    //show_id,type,title,director,cast,country,date_added,release_year,rating,duration,listed_in,description
+        |    input
+        |    input.map(line => {
+        |      val arr = line.split(",")
+        |      val (studentID, grade) = (arr(0), arr(2).toInt)
+        |
+        |      (studentID, grade)
+        |    }).mapValues(grade => {
+        |      if (grade >= 93) 4.0f
+        |      else if (grade >= 90) 3.7f
+        |      else if (grade >= 87) 3.3f
+        |      else if (grade >= 83) 3.0f
+        |      else if (grade >= 80) 2.7f
+        |      else if (grade >= 77) 23f
+        |      else if (grade >= 73) 2.0f
+        |      else if (grade >= 70) 1.7f
+        |      else if (grade >= 67) 1.3f
+        |      else if (grade >= 65) 1.0f
+        |      else 0.0f
+        |    }).aggregateByKey((0.0f, 0f))(
+        |      {case ((sum, count), next) => (sum + next, count+1)},
+        |      {case ((sum1, count1), (sum2, count2)) => (sum1+sum2,count1+count2)}
+        |    ).mapValues({case (sum, count) => sum/count})
+        |  }}""".stripMargin
     val tree = program.parse[Source].get
     val transformed = transformer(tree)
     

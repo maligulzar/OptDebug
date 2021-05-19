@@ -1,58 +1,76 @@
 package symbolicprimitives
 
-import provenance.data.Provenance
+import provenance.data.{DummyProvenance, Provenance}
 
 /**
   * Created by malig on 4/25/19.
   */
 
-case class SymFloat(override val value: Float, p:Provenance) extends SymAny(value, p){
+case class SymFloat(override val value: Float, p:Provenance = DummyProvenance.create()) extends SymAny(value, p){
   /**
     * Overloading operators from here onwards
     */
+  setProvenance(newProvenance(getCallSite().cloneProvenance()))
+
+
 
   def +(x: Float): SymFloat = {
+    val mprov = getCallSite()
     val d = value + x
-    SymFloat(d, getProvenance())
+    SymFloat(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def -(x: Float): SymFloat = {
+    val mprov = getCallSite()
     val d = value - x
-    SymFloat(d, getProvenance())
+    SymFloat(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def *(x: Float): SymFloat = {
+    val mprov = getCallSite()
     val d = value * x
-    SymFloat(d, getProvenance())
+    SymFloat(d, newProvenance(mprov.cloneProvenance()))
 
   }
 
   def /(x: Float): SymFloat = {
+    val mprov = getCallSite()
     val d = value / x
-    SymFloat(d, getProvenance())
+    SymFloat(d, newProvenance(mprov.cloneProvenance()))
   }
 
   def +(x: SymFloat): SymFloat = {
-    SymFloat(value + x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymFloat(value + x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def +(x: SymDouble): SymDouble = {
-    SymDouble(value + x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymDouble(value + x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def -(x: SymFloat): SymFloat = {
-    SymFloat(value - x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymFloat(value - x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
 
   def *(x: SymFloat): SymFloat = {
-    SymFloat(value * x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymFloat(value * x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
 
   }
 
   def /(x: SymFloat): SymFloat = {
-    SymFloat(value / x.value, newProvenance(x.getProvenance()))
+    val mprov = getCallSite()
+    SymFloat(value / x.value, newProvenance(x.getProvenance(), mprov.cloneProvenance()))
   }
-  
+
+  def >(x: Float): Boolean = {
+    val mprov = getCallSite()
+    setProvenance(newProvenance(mprov.cloneProvenance()))
+    return value > x
+  }
+
   // Incomplete comparison operators - see discussion in SymDouble on provenance
   def >(x: SymFloat): Boolean = {
     // mergeProvenance(x.getProvenance())

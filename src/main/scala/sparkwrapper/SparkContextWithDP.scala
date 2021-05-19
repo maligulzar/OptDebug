@@ -2,7 +2,7 @@ package sparkwrapper
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import provenance.data.Provenance
+import provenance.data.{DummyProvenance, Provenance}
 import provenance.rdd.{FlatProvenanceDefaultRDD, ProvenanceRDD}
 import symbolicprimitives.{SymString, Utils}
 
@@ -25,11 +25,13 @@ class SparkContextWithDP(sc: SparkContext) {
     // adjusted this in our application (since the change needs to be propagated to all
     // machines in the cluster). Provenance.create() by itself will lazily evaluate
     // provenanceFactory, which won't be updated on worker nodes if changed in-application.
-    val provCreatorFn = Provenance.createFn()
-    Utils.setInputZip(rdd.zipWithUniqueId())
+  //  val provCreatorFn = Provenance.createFn()
+    //Utils.setInputZip(
+      rdd
+        //.zipWithUniqueId())
          .map { record =>
-                  val prov = provCreatorFn(Seq(record._2))
-                  followup(record._1, prov)
+                  //val prov = provCreatorFn(Seq())
+                  followup(record, DummyProvenance.create())
               }
   }
   

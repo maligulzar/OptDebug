@@ -39,7 +39,12 @@ object Provenance {
   //  setDedupSerializer(true)
   
   private var provenanceFactory: ProvenanceFactory = _
-  setProvenanceFactory(RoaringBitmapProvenance)
+  //setProvenanceFactory(BitSetProvenance)
+  setProvenanceFactory(OptSetProvenance)
+
+  def isProvenanceFactory[T](): Boolean = this.provenanceFactory.isInstanceOf[T]
+  //setProvenanceFactory(RoaringBitmapProvenance)
+
   //setProvenanceFactory(SetProvenance)
   
   def create(ids: Long*): Provenance = provenanceFactory.create(ids: _*)

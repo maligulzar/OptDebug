@@ -52,6 +52,16 @@ trait PairProvenanceRDD[K, V] extends ProvenanceRDD[(K, V)] {
                              enableUDFAwareProv = enableUDFAwareProv)(vct)
   }
 
+
+  def groupByKey(partitioner: Partitioner): PairProvenanceRDD[K, Iterable[V]]
+
+  def groupByKey(numPartitions: Int): PairProvenanceRDD[K, Iterable[V]] =
+    groupByKey(new HashPartitioner(numPartitions))
+
+
+  def groupByKey(): PairProvenanceRDD[K, Iterable[V]]
+
+
   /** If Influence function is given then the UDFAwareProvenance is un-applicable */
   def reduceByKeyOld(
       func: (V, V) => V,
