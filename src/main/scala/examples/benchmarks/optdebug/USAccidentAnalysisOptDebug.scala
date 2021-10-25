@@ -22,23 +22,34 @@ object USAccidentAnalysisOptDebug {
   def main(args: Array[String]): Unit = {
 
     val sparkConf = new SparkConf()
+    var logFile = ""
+    var perpartitionSize  = 10000
+    if (args.length < 2) {
+      sparkConf.setMaster("local[6]")
+      sparkConf
+        .setAppName("Airport Transit Time Analysis")
+        .set("spark.executor.memory", "4g")
+      logFile =
+        "datasets/accidentdata/US_Accidents_Dec20_Updated_restruct.csv/*"
 
-    sparkConf.setMaster("local[6]")
-    sparkConf
-      .setAppName("Airport Transit Time Analysis")
-      .set("spark.executor.memory", "4g")
-    var logFile =
-      "datasets/accidentdata/US_Accidents_Dec20_Updated_restruct.csv/part-0000[0-4]*"
+    } else {
+      println(s" Loading the arguments : ${args(0)} -- ${args(1)}")
+      logFile = args(0)
+      sparkConf.setMaster(args(1))
+      sparkConf.setAppName("US Accident")
+      if(args.length ==3 ) perpartitionSize = args(2).toInt
 
+    } //set up spark context
+
+    val temp_path = logFile.replaceAll("/\\*", "")
     val ctx = new SparkContext(sparkConf) //set up lineage context and start capture lineage
     val lc = new LineageContext(ctx)
-    val optdebug = new OptDebug(lc)
+    val optdebug = new OptDebug(lc,temp_path, perpartitionSize)
     lc.setCaptureLineage(true)
     optdebug.runWithOptDebug[(String, Float), (SymString, SymFloat)](logFile,
                                                            fun1,
                                                            fun2,
                                                            Some(test))
-    println("Tarantula Score" + optdebug.findFaultLocationWithSpectra())
   }
 
   def fun1(input: Lineage[String]): RDD[(String, Float)] = {
@@ -54,7 +65,7 @@ object USAccidentAnalysisOptDebug {
           if (vis == "nan") {
             avg_vis.getOrElse(weather, 0f)
           } else vis.toFloat
-        (arr(1), up_vis)
+        (arr(1)+arr(13), up_vis)
       }.aggregateByKey((0.0f, 0))(
       {case ((sum, count), next) => (sum + next, count+1)},
       {case ((sum1, count1), (sum2, count2)) => (sum1+sum2,count1+count2)}
@@ -77,7 +88,7 @@ object USAccidentAnalysisOptDebug {
                      weather.getProvenance())
           } else
             vis.toFloat
-        (arr(1), up_vis)
+        (arr(1)+arr(13), up_vis)
       }.aggregateByKey((SymFloat(0.0f), SymInt(0)))(
       {case ((sum, count), next) => (next + sum, count+1)},
       {case ((sum1, count1), (sum2, count2)) => (sum1+sum2,count1+count2)}
@@ -86,8 +97,8 @@ object USAccidentAnalysisOptDebug {
 
   def test(t: (String, Float)): Boolean = {
 
-    if (t._1 == "1")
-      if (t._2 > 90)
+    if (t._1.startsWith("1"))
+      if (t._2 >=0.5)
         true
       else
         false

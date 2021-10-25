@@ -17,21 +17,24 @@ object CommuteTypeOptDebug {
     val sparkConf = new SparkConf()
     var logFile = ""
     var local = 500
+    var perpartitionSize  = 10000
     if (args.length < 2) {
       sparkConf.setMaster("local[6]")
       sparkConf.setAppName("Airport Transit Time Analysis").set("spark.executor.memory", "2g")
       logFile = "datasets/commute/trips/*"
     } else {
-      logFile = args(0)
-      local = args(1).toInt
+      println(s" Loading the arguments : ${args(0)} -- ${args(1)}")
+        logFile = args(0)
+        sparkConf.setMaster(args(1))
+        sparkConf.setAppName("Airport Transit Time Analysis")
+      if(args.length ==3 ) perpartitionSize = args(2).toInt
     } //set up spark context
-
+    val temp_path = logFile.replaceAll("/\\*", "")
     val ctx = new SparkContext(sparkConf) //set up lineage context and start capture lineage
     val lc = new LineageContext(ctx)
-    val optdebug = new OptDebug(lc)
+    val optdebug = new OptDebug(lc,temp_path, perpartitionSize)
     lc.setCaptureLineage(true)
     optdebug.runWithOptDebug[(String, Float), (String, SymFloat)](logFile, fun1, fun2, Some(test))
-    println("Tarantula Score" + optdebug.findFaultLocationWithSpectra())
   }
 
 
@@ -42,49 +45,49 @@ object CommuteTypeOptDebug {
     }
       .map { s =>
         val speed = s._2
-        if (speed > 300) {
-          ("airplane", speed)
+        if (speed > 70) {
+          ("airplane"+s._1, speed)
         }
         else if (speed > 40) {
-          ("car", speed)
+          ("car"+s._1, speed)
         }
         else if (speed > 15) {
-          ("public", speed)
+          ("public"+s._1, speed)
         }
         else if (speed > 10) {
-          ("onfoot", speed)
+          ("onfoot"+s._1, speed)
         } else
-          ("invalid", speed)
+          ("invalid"+s._1, speed)
       }.reduceByKey(_ + _)
   }
 
   def fun2(input: ProvenanceRDD[SymString]): ProvenanceRDD[(String, SymFloat)] = {
     input.map { s =>
       val cols = s.split(",")
-      (cols(1), cols(3).toFloat / cols(4).toFloat)
+      (cols(2), cols(3).toFloat / cols(4).toFloat)
     }
       .map { s =>
         val speed = s._2
-        if (speed > 300) {
-          ("airplane", speed)
+        if (speed > 70) {
+          ("airplane"+s._1, speed)
         }
         else if (speed > 40) {
-          ("car", speed)
+          ("car"+s._1, speed)
         }
         else if (speed > 15) {
-          ("public", speed)
+          ("public"+s._1, speed)
         }
         else if (speed > 10) { //error
-          ("onfoot", speed)
+          ("onfoot"+s._1, speed)
         } else
-          ("invalid", speed)
+          ("invalid"+s._1, speed)
       }.reduceByKey(_ + _)
   }
 
   def test(t: (String,Float)): Boolean = {
     val (str, speed) = t
 
-    if (str == "invalid")
+    if (str.startsWith("invalid"))
       if (speed <0)
         true
       else

@@ -14,7 +14,7 @@ import scala.util.Random
 object WeatherDataGenerator {
   var logFile = ""
   var partitions = 10
-  var dataper  = 10
+  var dataper  = 100
   var fault_rate = 0.000001
   val random = new Random(42)
   def main(args:Array[String]) =
@@ -80,3 +80,65 @@ object WeatherDataGenerator {
   }
 }
 //2,088,000
+
+
+/**
+import scala.util.Random
+var logFile = "hdfs://zion-headnode:9000/student/socc21/snowfall/"
+  var partitions = 200
+  var dataper  = 200
+  var fault_rate = 0.000001
+  val random = new Random(42)
+
+
+def faultInjector(): Boolean ={
+    if(random.nextInt(dataper *30*12*116* partitions) < dataper *30*12*116* partitions*fault_rate)
+     true else false
+  }
+  def getLowSnow(): String = {
+    if(faultInjector()){
+      return  "90in"
+    }
+    if(random.nextInt(10000) == 0){
+       return (random.nextFloat()/2) + "ft"
+    }else{
+       return random.nextInt(160) + "mm"
+
+    }
+  }
+  def getHighSnow(): String ={
+    if(faultInjector()){
+      return  "90in"
+    }
+    if(random.nextInt(10000) == 0){
+     return (random.nextFloat()*13) + "ft"
+    }else{
+      return random.nextInt(4000) + "mm"
+
+  }
+  }
+
+
+
+  sc.parallelize(Seq[Int]() , partitions).mapPartitions { _ =>
+      (1 to dataper).flatMap{_ =>
+        var zipcode = (random.nextInt(9)+1).toString + random.nextInt(10).toString + random.nextInt(10).toString + random.nextInt(10).toString + random.nextInt(10).toString
+        var list = List[String]()
+        for(day <- 1 to 30){
+          for(m <- 1 to 12){
+            for( y <- 1900 to 2016){
+              var snow = "0mm"
+              if(zipcode.startsWith("3") || zipcode.startsWith("7") || zipcode.startsWith("9")){
+                snow = getLowSnow()
+                list = s"""$zipcode,$day/$m/$y,$snow""" :: list
+              }else{
+                snow = getHighSnow()
+                list = s"""$zipcode,$day/$m/$y,$snow""" :: list
+              }
+            }
+          }
+        }
+        list}.iterator}.saveAsTextFile(logFile)
+
+
+ */

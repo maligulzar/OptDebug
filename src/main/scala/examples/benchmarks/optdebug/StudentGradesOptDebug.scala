@@ -16,10 +16,9 @@ import symbolicprimitives.{SymFloat, SymInt, SymString}
 object StudentGradesOptDebug {
 
   def main(args: Array[String]): Unit = {
-
     val sparkConf = new SparkConf()
+    var perpartitionSize  = 10000
     var logFile = ""
-    var local = 500
     if (args.length < 2) {
       sparkConf.setMaster("local[6]")
       sparkConf
@@ -27,17 +26,22 @@ object StudentGradesOptDebug {
         .set("spark.executor.memory", "2g")
       logFile = "datasets/studentGradesV2/*"
     } else {
+      println(s" Loading the arguments : ${args(0)} -- ${args(1)}")
       logFile = args(0)
+      sparkConf.setMaster(args(1))
+      sparkConf.setAppName("Student")
+      if(args.length ==3 ) perpartitionSize = args(2).toInt
     } //set up spark context
+
+    val temp_path = logFile.replaceAll("/\\*", "")
     val ctx = new SparkContext(sparkConf) //set up lineage context and start capture lineage
     val lc = new LineageContext(ctx)
-    val optdebug = new OptDebug(lc)
+    val optdebug = new OptDebug(lc, temp_path, perpartitionSize)
     lc.setCaptureLineage(true)
     optdebug.runWithOptDebug[(String, Float), (SymString, SymFloat)](logFile,
                                                                  fun1,
                                                                  fun2,
                                                                  Some(test))
-    println("Tarantula Score" + optdebug.findFaultLocationWithSpectra())
   }
 
   def fun1(input: Lineage[String]): RDD[(String, Float)] = {
@@ -94,7 +98,8 @@ object StudentGradesOptDebug {
         SymFloat(3.0f, grade.getProvenance())
       else if (grade >= 80)
         SymFloat(2.7f, grade.getProvenance())
-      else if (grade >= 77) SymFloat(23f, grade.getProvenance())
+      else if (grade >= 77)
+        SymFloat(23f, grade.getProvenance())
       else if (grade >= 73)
         SymFloat(2.0f, grade.getProvenance())
       else if (grade >= 70)

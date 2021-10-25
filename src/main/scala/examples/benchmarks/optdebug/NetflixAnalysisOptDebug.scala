@@ -18,26 +18,31 @@ object NetflixAnalysisOptDebug {
   def main(args: Array[String]): Unit = {
 
     val sparkConf = new SparkConf()
+    var perpartitionSize  = 10000
     var logFile = ""
-    var local = 500
     if (args.length < 2) {
       sparkConf.setMaster("local[6]")
       sparkConf
         .setAppName("Airport Transit Time Analysis")
         .set("spark.executor.memory", "2g")
-      logFile = "datasets/netflixdata/netflix_titles.csv"
+      logFile = "datasets/netflixdata/netflix_titles_restruct/*"
     } else {
+      println(s" Loading the arguments : ${args(0)} -- ${args(1)}")
       logFile = args(0)
+      sparkConf.setMaster(args(1))
+      sparkConf.setAppName("Netflix")
+      if(args.length ==3 ) perpartitionSize = args(2).toInt
     } //set up spark context
-    val ctx = new SparkContext(sparkConf) //set up lineage context and start capture lineage
+
+    val temp_path = logFile.replaceAll("/\\*", "")
+   val ctx = new SparkContext(sparkConf) //set up lineage context and start capture lineage
     val lc = new LineageContext(ctx)
-    val optdebug = new OptDebug(lc)
+    val optdebug = new OptDebug(lc, temp_path, perpartitionSize)
     lc.setCaptureLineage(true)
     optdebug.runWithOptDebug[(Int, Int), (SymInt, SymInt)](logFile,
                                                                  fun1,
                                                                  fun2,
                                                                  Some(test))
-    println("Tarantula Score" + optdebug.findFaultLocationWithSpectra())
   }
 
   def fun1(input: Lineage[String]): RDD[(Int, Int)] = {
@@ -85,4 +90,7 @@ object NetflixAnalysisOptDebug {
   }
 
   def test(t: (Int, Int)): Boolean = t._1 >= 0
+
+
+
 }

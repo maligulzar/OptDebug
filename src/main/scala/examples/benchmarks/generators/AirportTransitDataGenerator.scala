@@ -56,24 +56,33 @@ object AirportTransitDataGenerator {
     if(new File(logFile).exists()){
       deleteDir(new File(logFile))
     }
-
     val sc = new SparkContext(sparkConf)
+
+    sc.parallelize(Seq[Int]() , partitions).mapPartitions { _ =>
+      (1 to dataper).map{_ =>
+        val airportcode = getAirportCode()
+        val depairportcode = getAirportCode()
+
+        val date = (Random.nextInt(12)+1).toString +"/" + Random.nextInt(31).toString + "/" +  (Random.nextInt(8)+10).toString
+        val passid = (Random.nextInt(26)+65).toChar.toString +(Random.nextInt(26)+65).toChar.toString+(Random.nextInt(26)+65).toChar.toString+(Random.nextInt(899999)+100000)
+        val arrival = (Random.nextInt(24)).toString + ":" + (Random.nextInt(60)).toString
+        val transit:Float = (Random.nextInt(4)+1).toFloat/2f
+        val dep  = addTime(arrival, transit)
+        s"""$passid,$depairportcode,$arrival,$airportcode,$dep"""
+      }.iterator}.saveAsTextFile(logFile)
+
+/*
     sc.parallelize(Seq[Int]() , partitions).mapPartitions { _ =>
       (1 to dataper).map{_ =>
         val airportcode = getAirportCode()
         val date = (Random.nextInt(12)+1).toString +"/" + Random.nextInt(31).toString + "/" +  (Random.nextInt(8)+10).toString
-        val passid = (Random.nextInt(8)+10).toString +(Random.nextInt(8)+10).toString +(Random.nextInt(8)+10).toString
+        val passid = (Random.nextInt(26)+65).toChar.toString +(Random.nextInt(26)+65).toChar.toString+(Random.nextInt(26)+65).toChar.toString+(Random.nextInt(899999)+100000)
         val arrival = (Random.nextInt(24)).toString + ":" + (Random.nextInt(60)).toString
         val transit:Float = (Random.nextInt(4)+1).toFloat/2f
         val dep  = addTime(arrival, transit)
-        if(faultInjector()){
-          println("Injecting")
-          s"""$date,$passid,$passid:0,$dep,$airportcode"""
-        }
-        else
         s"""$date,$passid,$arrival,$dep,$airportcode"""
       }.iterator}.saveAsTextFile(logFile)
-
+*/
 
   }
 
@@ -86,3 +95,47 @@ object AirportTransitDataGenerator {
   }
 
 }
+
+
+/***
+ import scala.util.Random
+ def addTime(arr: String, fl: Float) : String = {
+    val arr_min = arr.split(":")(0).toInt*60 + arr.split(":")(1).toInt
+    val dep_min = (arr_min + fl*60).toInt
+    val hours = dep_min/60 % 24
+    val min = dep_min % 60
+    return hours.toInt+":"+min.toInt
+
+  }
+  def getAirportCode(): String ={
+    val arr = Array("LAX" , "SFO" , "JFK" , "ORD" , "MDW" , "SEA" , "SJC" , "BNA" , "LGA" , "DAL" , "FTW" , "PHX" , "BUR" , "JAX" , "ATL" , "MNN"
+    , "KOX", "OAK" , "RNO" , "ANC" , "MIA" , "MCO" , "BOS" , "DTW" , "MSP" , "EWR" , "ROC" , "SYR" , "CLE" , "PDX" , "PHL" , "PVD" , "HOU" , "SLC",
+      "MSN" , "MKE" , "LHR" , "LHE" , "IST" , "ISB" , "RYD" , "DBX" , "ADU" , "FRK"  , "FRN" , "IRN" , "JAP" , "SUL" , "POL" , "PUP" , "SYX",
+      "MLB" , "PRT" , "MNA" , "MUX" , "MLA" , "SPB" , "MOS" , "CAR" , "CUZ" , "RDJ" , "SPO" , "OCA" , "LBG" , "BUB" , "LAK" , "LUT" , "XYK" ,
+      "ZUT" , "AUZ" , "AUX" , "ZUN" , "ZXA" , "NPW" , "NBA" , "NVM" , "PNA" , "EWQ" , "QWS" , "QRD"  , "LAS" , "NOW" , "WER" , "WRT" , "WPO")
+
+    val one = Random.nextInt(arr.length)
+    arr(one)
+  }
+
+   var partitions = 196
+    var dataper  = 4500000
+    var fault_rate = 0.0001
+    def faultInjector()  = if(Random.nextInt(dataper*partitions) < dataper*partitions* fault_rate) true else false
+
+val logFile = "hdfs://zion-headnode:9000/student/socc21/flyinghours/"
+
+ sc.parallelize(Seq[Int]() , partitions).mapPartitions { _ =>
+      (1 to dataper).map{_ =>
+        val airportcode = getAirportCode()
+        val depairportcode = getAirportCode()
+
+        val date = (Random.nextInt(12)+1).toString +"/" + Random.nextInt(31).toString + "/" +  (Random.nextInt(8)+10).toString
+        val passid = (Random.nextInt(26)+65).toChar.toString +(Random.nextInt(26)+65).toChar.toString+(Random.nextInt(26)+65).toChar.toString+(Random.nextInt(899999)+100000)
+       val arrival = (Random.nextInt(24)).toString + ":" + (Random.nextInt(60)).toString
+        val transit:Float = (Random.nextInt(4)+1).toFloat/2f
+        val dep  = addTime(arrival, transit)
+        s"""$passid,$depairportcode,$arrival,$airportcode,$dep"""
+      }.iterator}.saveAsTextFile(logFile)
+
+*/

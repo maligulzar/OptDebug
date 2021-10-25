@@ -151,7 +151,7 @@ object AggregationFunctions {
   
   def minMaxDeltaByKey[K: ClassTag](input: ProvenanceRDD[(K, SymFloat)])
                                    (implicit a: DummyImplicit): PairProvenanceRDD[K, SymFloat] = {
-    input.aggregateByKey[(SymFloat, SymFloat)]((Float.MaxValue, Float.MinValue))(
+    input.aggregateByKey[(SymFloat, SymFloat)]((SymFloat(Float.MaxValue), SymFloat(Float.MinValue)))(
       { case ((curMin, curMax), next) => (MathSym.min(curMin, next), MathSym.max(curMax, next)) },
       { case ((minA, maxA), (minB, maxB)) => (MathSym.min(minA, minB), MathSym.max(maxA, maxB)) }
       // enableUDFAwareProv = Some(false) // implied property here, since output type is tuple.

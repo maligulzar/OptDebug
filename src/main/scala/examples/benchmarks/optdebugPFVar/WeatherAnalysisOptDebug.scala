@@ -1,15 +1,13 @@
-package examples.benchmarks.optdebug
+package examples.benchmarks.optdebugPFVar
 
 import examples.benchmarks.AggregationFunctions
 import optdebug.OptDebug
 import org.apache.spark.lineage.LineageContext
-import org.apache.spark.lineage.LineageContext._
 import org.apache.spark.lineage.rdd.Lineage
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import provenance.rdd.ProvenanceRDD
-import sparkwrapper.SparkContextWithDP
-import symbolicprimitives.{SymFloat, SymInt, SymString, Utils}
+import symbolicprimitives.{SymFloat, SymString}
 
 
 object WeatherAnalysisOptDebug {
@@ -19,6 +17,7 @@ object WeatherAnalysisOptDebug {
     val sparkConf = new SparkConf()
     var perpartitionSize  = 10000
     var logFile = ""
+    var (p,f) =(2,2);
     if (args.length < 2) {
       sparkConf.setMaster("local[6]")
       sparkConf.setAppName("Weather").set("spark.executor.memory", "2g")
@@ -29,13 +28,16 @@ object WeatherAnalysisOptDebug {
       sparkConf.setMaster(args(1))
       sparkConf.setAppName("Weather")
       if(args.length ==3 ) perpartitionSize = args(2).toInt
+      if(args.length ==4 ) p = args(3).toInt
+      if(args.length ==5 ) f = args(4).toInt
+
     } //set up spark context
 
     val temp_path = logFile.replaceAll("/\\*", "")
 
     val ctx = new SparkContext(sparkConf) //set up lineage context and start capture lineage
     val lc = new LineageContext(ctx)
-    val optdebug = new OptDebug(lc, temp_path, perpartitionSize)
+    val optdebug = new OptDebug(lc, temp_path, perpartitionSize ,SELECTIVITY_FACTOR_SUCCESS = p,SELECTIVITY_FACTOR_FAILURE = f)
     lc.setCaptureLineage(true)
     optdebug.runWithOptDebug[(String, Float) , (SymString, SymFloat)](logFile, fun1, fun2, Some(test))
   }

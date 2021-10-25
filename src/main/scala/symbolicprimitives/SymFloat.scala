@@ -71,6 +71,18 @@ case class SymFloat(override val value: Float, p:Provenance = DummyProvenance.cr
     return value > x
   }
 
+  def <(x: Float): Boolean = {
+    val mprov = getCallSite()
+    setProvenance(newProvenance(mprov.cloneProvenance()))
+    return value < x
+  }
+
+  def <(x: Int): Boolean = {
+    val mprov = getCallSite()
+    setProvenance(newProvenance(mprov.cloneProvenance()))
+    return value < x
+  }
+
   // Incomplete comparison operators - see discussion in SymDouble on provenance
   def >(x: SymFloat): Boolean = {
     // mergeProvenance(x.getProvenance())
